@@ -15,3 +15,10 @@
 *.exe
 *.out
 *.app
+
+src/waveformgenerator
+test/test.txt
+src/.DS_Store
+test/.DS_Store
+*.DS_Store
+
