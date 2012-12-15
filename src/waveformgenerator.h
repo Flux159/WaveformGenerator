@@ -24,3 +24,10 @@ typedef struct wavheader{
 	char subChunk2Id[4];
 	int subChunk2Size;
 } wavheader;
+
+wavheader* init_and_read_wavheader(FILE* fp);
+void dealloc_wavheader(wavheader* header);
+
+void* init_and_read_wavdata(FILE* fp, int size);
+void dealloc_wavdata(void* wavdata);
+
