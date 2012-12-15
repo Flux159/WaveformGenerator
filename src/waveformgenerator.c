@@ -14,6 +14,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <unistd.h>
+#include <string.h>
+#include <stdarg.h>
+
+#define PNG_DEBUG 3
+#include <png.h>
+
 #include "waveformgenerator.h"
 
 //typedef struct wavheader* wavheaderPointer;

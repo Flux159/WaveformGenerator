@@ -25,9 +25,24 @@ typedef struct wavheader{
 	int subChunk2Size;
 } wavheader;
 
+/*
+* Functions to read wavheader and deallocate memory once completed
+*/
 wavheader* init_and_read_wavheader(FILE* fp);
 void dealloc_wavheader(wavheader* header);
 
+/*
+* Functions to read wavdata and deallocate memory once completed
+*/
 void* init_and_read_wavdata(FILE* fp, int size);
 void dealloc_wavdata(void* wavdata);
 
+/*
+* Format of png file
+* Information obtained here:
+*		http://en.wikipedia.org/wiki/Portable_Network_Graphics
+*		http://www.libpng.org/pub/png/spec/1.2/PNG-Structure.html
+*		http://www.libpng.org/pub/png/spec/1.2/PNG-CRCAppendix.html
+* Using libpng to create png files since its been tested and works (libpng uses zlib)
+*/
+// #define PNG_HEADER 0x89504E470D0A1A0A
