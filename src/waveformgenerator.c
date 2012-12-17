@@ -23,7 +23,8 @@
 
 //libpng for creating png images
 #define PNG_DEBUG 3
-#include "/usr/local/include/libpng15/png.h"
+//#include "/usr/local/include/libpng15/png.h"
+#include <png.h>
 
 #include "waveformgenerator.h"
 
@@ -42,11 +43,11 @@ wavheader* init_and_read_wavheader(FILE* fp){
 	* Note that character strings will be printed oddly because of no null at 
 	* the end of the string.
 	*/ 
-	printf("Header chunkId: %s\n", header->chunkId);
-	printf("Header chunkSize: %d\n", header->chunkSize);
-	printf("Header format: %s\n", header->format);
-	printf("Header sampleRate: %d\n", header->sampleRate);
-	printf("Header dataSize (chunk2Size): %d\n", header->subChunk2Size);
+	// printf("Header chunkId: %s\n", header->chunkId);
+	// printf("Header chunkSize: %d\n", header->chunkSize);
+	// printf("Header format: %s\n", header->format);
+	// printf("Header sampleRate: %d\n", header->sampleRate);
+	// printf("Header dataSize (chunk2Size): %d\n", header->subChunk2Size);
 	
 	return header;
 }
@@ -94,18 +95,18 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 	if(wavHeader->bitsPerSample == 8){
 		char* audioData = (char*)wavData;
 		
-		printf("Char AudioData:\n");
-		printf("%d, %d, %d, %d\n", (int)audioData[0], (int)audioData[1], (int)audioData[2], (int)audioData[3]);
+		// printf("Char AudioData:\n");
+		// printf("%d, %d, %d, %d\n", (int)audioData[0], (int)audioData[1], (int)audioData[2], (int)audioData[3]);
 		
 	}
 	else if(wavHeader->bitsPerSample == 16){
 		short* audioData = (short*)wavData;
 		
-		printf("Number of channels: %d\n", (int)channels);
-		printf("Size of AudioData: %d\n", (int)wavHeader->subChunk2Size);
-		printf("Short AudioData:\n");
-		printf("%d, %d, %d, %d\n", (int)audioData[10000], (int)audioData[10001], (int)audioData[2], (int)audioData[3]);
-		
+		// printf("Number of channels: %d\n", (int)channels);
+		// 		printf("Size of AudioData: %d\n", (int)wavHeader->subChunk2Size);
+		// 		printf("Short AudioData:\n");
+		// 		printf("%d, %d, %d, %d\n", (int)audioData[10000], (int)audioData[10001], (int)audioData[2], (int)audioData[3]);
+				
 		//The total number of audio samples (taking into account short values & the number of channels)
 		int sizeOfAudioIndexData = ((wavHeader->chunkSize))/(2);
 		//The frame size is the total number of samples within a single frame of the png image
@@ -119,9 +120,9 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 		float framePeaksDoubles[width];
 		int sampleIndex, frameIndex;
 		
-		printf("Size of AudioData: %d\n", sizeOfAudioIndexData);
-		printf("TotalFrames: %d\n", width);
-		printf("Frame Size: %d\n", frameSize);
+		// printf("Size of AudioData: %d\n", sizeOfAudioIndexData);
+		// printf("TotalFrames: %d\n", width);
+		// printf("Frame Size: %d\n", frameSize);
 		
 		for(frameIndex = 0; frameIndex < width; frameIndex++){
 			framePeaks[frameIndex] = 0;
@@ -168,7 +169,7 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 			// audioData[sampleIndex*channels]
 		}
 		
-		printf("FramePeaksDoubles: \n");
+		// printf("FramePeaksDoubles: \n");
 		for(frameIndex = 0; frameIndex < width; frameIndex++){
 			// framePeaks[frameIndex] = (short)sqrt(frameRMS[(sampleIndex)/frameSize]);
 			// printf("%d, ", framePeaks[frameIndex]);
@@ -181,7 +182,7 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 			framePeaks[frameIndex] = (short)(framePeaksDoubles[frameIndex]*(height/2));
 			//printf("%d, ", (int)framePeaks[frameIndex]);
 		}
-		printf("\n");
+		// printf("\n");
 		
 		//Now set each image column based on the framePeak (ignoring the last few)
 		for(frameIndex = 0; frameIndex < width; frameIndex++){
@@ -241,7 +242,7 @@ void dealloc_waveformdata(png_bytep* row_pointers, int height){
 */
 int createPNGImage(FILE* fp, int width, int height, png_byte bitDepth, png_byte colorType, void* wavData, wavheader* wavHeader){
 	//TODO: Implement create_png_image
-	printf("In create_png_image\n");
+	// printf("In create_png_image\n");
 	
 	/*
 	* Initialize libpng
