@@ -42,11 +42,11 @@ wavheader* init_and_read_wavheader(FILE* fp){
 	* Note that character strings will be printed oddly because of no null at 
 	* the end of the string.
 	*/ 
-	// printf("Header chunkId: %s\n", header->chunkId);
-	// printf("Header chunkSize: %d\n", header->chunkSize);
-	// printf("Header format: %s\n", header->format);
-	// printf("Header sampleRate: %d\n", header->sampleRate);
-	// printf("Header dataSize (chunk2Size): %d\n", header->subChunk2Size);
+	printf("Header chunkId: %s\n", header->chunkId);
+	printf("Header chunkSize: %d\n", header->chunkSize);
+	printf("Header format: %s\n", header->format);
+	printf("Header sampleRate: %d\n", header->sampleRate);
+	printf("Header dataSize (chunk2Size): %d\n", header->subChunk2Size);
 	
 	return header;
 }
@@ -66,6 +66,16 @@ void* init_and_read_wavdata(FILE* fp, int size){
 
 void dealloc_wavdata(void* wavdata){
 	free(wavdata);
+}
+
+short convert(short val){
+	// short rightbyte = val & 0xff;
+	// short leftbyte = (val >> 8) & 0xff;
+	// return ((rightbyte << 8) | leftbyte);
+	
+	// return (((val >> 8) & 0xff) | ((val << 8)));
+	
+	return val;
 }
 
 png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int height, png_byte bitDepth, png_byte colorType, void* wavData, wavheader* wavHeader){
@@ -97,38 +107,55 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 		printf("%d, %d, %d, %d\n", (int)audioData[10000], (int)audioData[10001], (int)audioData[2], (int)audioData[3]);
 		
 		//The total number of audio samples (taking into account short values & the number of channels)
-		int sizeOfAudioIndexData = (wavHeader->subChunk2Size)/(2*channels);
+		int sizeOfAudioIndexData = ((wavHeader->chunkSize))/(2);
 		//The frame size is the total number of samples within a single frame of the png image
-		int frameSize = sizeOfAudioIndexData / width;
+		int frameSize = sizeOfAudioIndexData / (width);
 		//The total frames is the number of frames (it should be equal to the width)
-		int totalFrames = sizeOfAudioIndexData / frameSize;
+		//int totalFrames = sizeOfAudioIndexData / frameSize;
 		
 		//Framepeaks stores the peaks in each frame
-		short framePeaks[totalFrames];
+		short framePeaks[width];
 		// int frameRMS[totalFrames];
-		float framePeaksDoubles[totalFrames];
+		float framePeaksDoubles[width];
 		int sampleIndex, frameIndex;
 		
 		printf("Size of AudioData: %d\n", sizeOfAudioIndexData);
-		printf("TotalFrames: %d\n", totalFrames);
+		printf("TotalFrames: %d\n", width);
 		printf("Frame Size: %d\n", frameSize);
 		
-		for(frameIndex = 0; frameIndex < totalFrames; frameIndex++){
+		for(frameIndex = 0; frameIndex < width; frameIndex++){
 			framePeaks[frameIndex] = 0;
 		}
 		// int j,k;
 		int temp;
 		
+		//I believe that the issue is when I have 2 channels, I'm doing something incorrect where my image ends up only really having like 1/4 of the samples that it needs to get the full image...
 		for(sampleIndex = 0; sampleIndex < sizeOfAudioIndexData; sampleIndex++){
 			//Peaks
-			if(framePeaks[(sampleIndex)/frameSize] < (short)abs((int)audioData[sampleIndex*channels])){
-				framePeaks[(sampleIndex)/frameSize] = (short)abs((int)audioData[sampleIndex*channels]);
-			}
-			if(channels > 1){
-				if(framePeaks[(sampleIndex)/frameSize] < (short)abs((int)audioData[sampleIndex*channels+1])){
-					framePeaks[(sampleIndex)/frameSize] = (short)abs((int)audioData[sampleIndex*channels+1]);
+			
+			if((sampleIndex/frameSize) < width){
+				if(framePeaks[(sampleIndex/(frameSize))] < (short)abs((int)audioData[sampleIndex])){
+					//printf(".");
+					framePeaks[(sampleIndex/(frameSize))] = (short)abs((int)audioData[sampleIndex]);
 				}
 			}
+			
+			// if((sampleIndex/(frameSize)) < width){
+			// 				if(framePeaks[(sampleIndex/(frameSize))] < (short)abs((int)audioData[sampleIndex*channels])){
+			// 					//printf(".");
+			// 					framePeaks[(sampleIndex/(frameSize))] = (short)abs((int)audioData[sampleIndex*channels]);
+			// 				}
+			// 				if(channels == 2){
+			// 					if(framePeaks[(sampleIndex/(frameSize))] < (short)abs((int)audioData[sampleIndex*channels+1])){
+			// 						//printf("/");
+			// 						framePeaks[(sampleIndex/(frameSize))] = (short)abs((int)audioData[sampleIndex*channels+1]);
+			// 					}
+			// 				}
+			// 			}
+			// 			if(sampleIndex % frameSize == 0){
+			// 				printf("SampleIndex: %d", sampleIndex);
+			// 			}
+			
 			
 			//RMS
 			// frameRMS[(sampleIndex)/frameSize] += pow((abs((int)audioData[sampleIndex*channels])), 2);
@@ -142,7 +169,7 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 		}
 		
 		printf("FramePeaksDoubles: \n");
-		for(frameIndex = 0; frameIndex < totalFrames; frameIndex++){
+		for(frameIndex = 0; frameIndex < width; frameIndex++){
 			// framePeaks[frameIndex] = (short)sqrt(frameRMS[(sampleIndex)/frameSize]);
 			// printf("%d, ", framePeaks[frameIndex]);
 			
@@ -172,6 +199,9 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 				ptr[3] = 255;
 			}
 			
+			if(maxRow == minRow){
+				maxRow = maxRow+1;
+			}
 			for(x = minRow; x < maxRow; x++){
 				png_byte* row = row_pointers[x];
 				png_byte* ptr = &(row[frameIndex*4]);
@@ -302,7 +332,7 @@ int main(int argc, char *argv[]){
 	wavheader* wavHeader = init_and_read_wavheader(wavFile);
 	
 	//Read wav file data here
-	void* wavData = init_and_read_wavdata(wavFile, wavHeader->subChunk2Size);
+	void* wavData = init_and_read_wavdata(wavFile, (wavHeader->chunkSize)-44);
 	
 	//Close the file pointer for the wav file input
 	fclose(wavFile);
@@ -310,8 +340,8 @@ int main(int argc, char *argv[]){
 	/*
 	* Should get these variables from command line (have defaults as well)
 	*/
-	int width = 1024;
-	int height = 150;
+	int width = 1800;
+	int height = 280;
 	png_byte colorType = PNG_COLOR_TYPE_RGB_ALPHA;
 	png_byte bitDepth = 8;
 	
