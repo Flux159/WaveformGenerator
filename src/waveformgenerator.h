@@ -45,4 +45,14 @@ void dealloc_wavdata(void* wavdata);
 *		http://www.libpng.org/pub/png/spec/1.2/PNG-CRCAppendix.html
 * Using libpng to create png files since its been tested and works (libpng uses zlib)
 */
-// #define PNG_HEADER 0x89504E470D0A1A0A
+
+/*
+* Functions to generate waveform
+*/
+png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int height, png_byte bitDepth, png_byte colorType, void* wavData, wavheader* wavHeader);
+void dealloc_waveformdata(png_bytep* row_pointers, int height);
+
+/*
+* Functions to write png image
+*/
+int createPNGImage(FILE* fp, int width, int height, png_byte bitDepth, png_byte colorType, void* wavData, wavheader* wavHeader);

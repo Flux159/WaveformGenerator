@@ -1,5 +1,5 @@
 waveformgenerator: waveformgenerator.c waveformgenerator.h
-	gcc -I/usr/local/include/libpng15 -L/usr/local/lib -lpng15 -lz -o waveformgenerator waveformgenerator.c
+	gcc -O2 -I/usr/local/include/libpng15 -L/usr/local/lib -lpng15 -lz -o waveformgenerator waveformgenerator.c
 
 test:
 	./waveformgenerator ../test/test.wav ../test/test.png

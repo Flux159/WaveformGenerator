@@ -23,32 +23,16 @@
 
 //libpng for creating png images
 #define PNG_DEBUG 3
-//#include "/usr/local/include/libpng15/png.h"
 #include <png.h>
 
 #include "waveformgenerator.h"
 
-//typedef struct wavheader* wavheaderPointer;
-
 wavheader* init_and_read_wavheader(FILE* fp){
 	wavheader* header = malloc(sizeof(wavheader));
-	
-	// printf("In init_and_read_wavheader\n");
-	
+		
 	//Read header here
 	fread(header, sizeof(wavheader), 1, fp);
-	
-	/*
-	* Testing what was read
-	* Note that character strings will be printed oddly because of no null at 
-	* the end of the string.
-	*/ 
-	// printf("Header chunkId: %s\n", header->chunkId);
-	// printf("Header chunkSize: %d\n", header->chunkSize);
-	// printf("Header format: %s\n", header->format);
-	// printf("Header sampleRate: %d\n", header->sampleRate);
-	// printf("Header dataSize (chunk2Size): %d\n", header->subChunk2Size);
-	
+
 	return header;
 }
 
@@ -57,7 +41,6 @@ void dealloc_wavheader(wavheader* header){
 }
 
 void* init_and_read_wavdata(FILE* fp, int size){
-	// printf("In read_wavdata\n");
 	void* wavdata = malloc(sizeof(char)*size);
 	
 	fread(wavdata, sizeof(char)*size, 1, fp);
@@ -67,16 +50,6 @@ void* init_and_read_wavdata(FILE* fp, int size){
 
 void dealloc_wavdata(void* wavdata){
 	free(wavdata);
-}
-
-short convert(short val){
-	// short rightbyte = val & 0xff;
-	// short leftbyte = (val >> 8) & 0xff;
-	// return ((rightbyte << 8) | leftbyte);
-	
-	// return (((val >> 8) & 0xff) | ((val << 8)));
-	
-	return val;
 }
 
 png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int height, png_byte bitDepth, png_byte colorType, void* wavData, wavheader* wavHeader){
@@ -94,102 +67,50 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 	short channels = wavHeader->numChannels;
 	if(wavHeader->bitsPerSample == 8){
 		char* audioData = (char*)wavData;
-		
-		// printf("Char AudioData:\n");
-		// printf("%d, %d, %d, %d\n", (int)audioData[0], (int)audioData[1], (int)audioData[2], (int)audioData[3]);
-		
+		//TODO: Implement for 8 bit wav files
 	}
 	else if(wavHeader->bitsPerSample == 16){
 		short* audioData = (short*)wavData;
 		
-		// printf("Number of channels: %d\n", (int)channels);
-		// 		printf("Size of AudioData: %d\n", (int)wavHeader->subChunk2Size);
-		// 		printf("Short AudioData:\n");
-		// 		printf("%d, %d, %d, %d\n", (int)audioData[10000], (int)audioData[10001], (int)audioData[2], (int)audioData[3]);
-				
 		//The total number of audio samples (taking into account short values & the number of channels)
 		int sizeOfAudioIndexData = ((wavHeader->chunkSize))/(2);
 		//The frame size is the total number of samples within a single frame of the png image
-		int frameSize = sizeOfAudioIndexData / (width);
-		//The total frames is the number of frames (it should be equal to the width)
-		//int totalFrames = sizeOfAudioIndexData / frameSize;
-		
-		//Framepeaks stores the peaks in each frame
+		int frameSize = sizeOfAudioIndexData / (width);		
+		//Framepeaks stores the peaks in each frame (the total number of frames is equal to the image width)
 		short framePeaks[width];
-		// int frameRMS[totalFrames];
 		float framePeaksDoubles[width];
 		int sampleIndex, frameIndex;
 		
-		// printf("Size of AudioData: %d\n", sizeOfAudioIndexData);
-		// printf("TotalFrames: %d\n", width);
-		// printf("Frame Size: %d\n", frameSize);
-		
+		//Initialize framePeaks to be 0
 		for(frameIndex = 0; frameIndex < width; frameIndex++){
 			framePeaks[frameIndex] = 0;
 		}
-		// int j,k;
-		int temp;
 		
-		//I believe that the issue is when I have 2 channels, I'm doing something incorrect where my image ends up only really having like 1/4 of the samples that it needs to get the full image...
+		//Calculate the peaks in each frame
 		for(sampleIndex = 0; sampleIndex < sizeOfAudioIndexData; sampleIndex++){
-			//Peaks
-			
 			if((sampleIndex/frameSize) < width){
 				if(framePeaks[(sampleIndex/(frameSize))] < (short)abs((int)audioData[sampleIndex])){
 					//printf(".");
 					framePeaks[(sampleIndex/(frameSize))] = (short)abs((int)audioData[sampleIndex]);
 				}
 			}
-			
-			// if((sampleIndex/(frameSize)) < width){
-			// 				if(framePeaks[(sampleIndex/(frameSize))] < (short)abs((int)audioData[sampleIndex*channels])){
-			// 					//printf(".");
-			// 					framePeaks[(sampleIndex/(frameSize))] = (short)abs((int)audioData[sampleIndex*channels]);
-			// 				}
-			// 				if(channels == 2){
-			// 					if(framePeaks[(sampleIndex/(frameSize))] < (short)abs((int)audioData[sampleIndex*channels+1])){
-			// 						//printf("/");
-			// 						framePeaks[(sampleIndex/(frameSize))] = (short)abs((int)audioData[sampleIndex*channels+1]);
-			// 					}
-			// 				}
-			// 			}
-			// 			if(sampleIndex % frameSize == 0){
-			// 				printf("SampleIndex: %d", sampleIndex);
-			// 			}
-			
-			
-			//RMS
-			// frameRMS[(sampleIndex)/frameSize] += pow((abs((int)audioData[sampleIndex*channels])), 2);
-			
-			//framePeaks[(sampleIndex)/frameSize] += 
-
-			// if((sampleIndex % 1000000) == 0){
-			// 				printf("Sample index: %d", sampleIndex);
-			// 			}
-			// audioData[sampleIndex*channels]
 		}
 		
-		// printf("FramePeaksDoubles: \n");
+		//Convert the raw data peaks into peaks that take into account the height of the image
 		for(frameIndex = 0; frameIndex < width; frameIndex++){
-			// framePeaks[frameIndex] = (short)sqrt(frameRMS[(sampleIndex)/frameSize]);
-			// printf("%d, ", framePeaks[frameIndex]);
-			
 			int scaleFactor = 32768;
-			// scaleFactor = 65536;
 			
 			framePeaksDoubles[frameIndex] = ((float)framePeaks[frameIndex])/scaleFactor;
-			//printf("%f, ", (framePeaksDoubles[frameIndex]*(height/2)));
 			framePeaks[frameIndex] = (short)(framePeaksDoubles[frameIndex]*(height/2));
-			//printf("%d, ", (int)framePeaks[frameIndex]);
 		}
-		// printf("\n");
 		
-		//Now set each image column based on the framePeak (ignoring the last few)
+		//Now set each image column based on the framePeak
 		for(frameIndex = 0; frameIndex < width; frameIndex++){
 			short currentPeak = framePeaks[frameIndex];
-			// draw_line(row_pointers, currentPeak, height);
 			int minRow = (height/2)-currentPeak;
 			int maxRow = (height/2)+currentPeak;
+			
+			//Set background to white
 			int x;
 			for(x = 0; x < height; x++){
 				png_byte* row = row_pointers[x];
@@ -200,9 +121,13 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 				ptr[3] = 255;
 			}
 			
+			//If minRow = maxRow, then you don't get any line displayed, this fixes that
+			//by making a 1pixel line show up in the middle of the image
 			if(maxRow == minRow){
 				maxRow = maxRow+1;
 			}
+			
+			//Get the row and the pixel, then set to blue color (this can be a command line argument)
 			for(x = minRow; x < maxRow; x++){
 				png_byte* row = row_pointers[x];
 				png_byte* ptr = &(row[frameIndex*4]);
@@ -215,20 +140,10 @@ png_bytep* init_waveform_and_process_wavdata(png_structp png_ptr, int width, int
 		
 	}
 	
-	
 	return row_pointers;
 }
 
-float audio_peak(void* wavData, int frameLeft, int frameRight){
-	int i;
-	float peak = 0;
-	for(i = frameLeft; i < frameRight; i++){
-		//abs(wavData[i])
-	}
-}
-
 void dealloc_waveformdata(png_bytep* row_pointers, int height){
-	// free(waveformdata);
 	int i;
 	for(i = 0; i < height; i++){
 		free(row_pointers[i]);
@@ -240,10 +155,7 @@ void dealloc_waveformdata(png_bytep* row_pointers, int height){
 * Read this for more knowledge about writing PNG files:
 * http://www.libpng.org/pub/png/libpng-1.2.5-manual.html#section-4.1
 */
-int createPNGImage(FILE* fp, int width, int height, png_byte bitDepth, png_byte colorType, void* wavData, wavheader* wavHeader){
-	//TODO: Implement create_png_image
-	// printf("In create_png_image\n");
-	
+int createPNGImage(FILE* fp, int width, int height, png_byte bitDepth, png_byte colorType, void* wavData, wavheader* wavHeader){	
 	/*
 	* Initialize libpng
 	*/
@@ -293,8 +205,6 @@ int createPNGImage(FILE* fp, int width, int height, png_byte bitDepth, png_byte 
 		return -1;
 	}
 	
-	// Can't currently write image because I don't have row_pointers or waveform data correctly set up
-	// Plus row_pointers needs to be of size 4*png_byte*width*height (if I use 8 as bit depth)
 	png_write_image(png_ptr, waveformData);
 	
 	/*
